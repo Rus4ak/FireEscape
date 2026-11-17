@@ -11,19 +11,33 @@ public class PlayerInteraction : MonoBehaviour
     public float checkDistance = 8f;
 
     private IInteractable _currentInteractableObject;
+    private IHoverable _currentHoverable;
 
     private void Update()
     {
         _promptText.text = "";
         _currentInteractableObject = null;
 
+        IHoverable newHoverable = null;
+
         if (Physics.Raycast(_camera.position, _camera.forward, out RaycastHit hit, checkDistance))
         {
             if (hit.collider.TryGetComponent<IInteractable>(out var interactable))
             {
-                _promptText.text = "[F]\n" + interactable.GetInteractionPrompt();
+                _promptText.text = "[E]\n" + interactable.GetInteractionPrompt();
                 _currentInteractableObject = interactable;
             }
+
+            hit.collider.TryGetComponent(out newHoverable);
+        }
+
+        if (_currentHoverable != newHoverable)
+        {
+            _currentHoverable?.OnHoverExit();
+
+            _currentHoverable = newHoverable;
+
+            _currentHoverable?.OnHoverEnter();
         }
     }
 
