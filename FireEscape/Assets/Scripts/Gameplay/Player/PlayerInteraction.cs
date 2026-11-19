@@ -12,6 +12,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private IInteractable _currentInteractableObject;
     private IHoverable _currentHoverable;
+    private TransparencyController _transparencyObject;
 
     private void Update()
     {
@@ -20,24 +21,48 @@ public class PlayerInteraction : MonoBehaviour
 
         IHoverable newHoverable = null;
 
-        if (Physics.Raycast(_camera.position, _camera.forward, out RaycastHit hit, checkDistance))
+        RaycastHit[] hits = Physics.RaycastAll(_camera.position, _camera.forward, checkDistance);
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        bool isFindTransparencyController = false;
+
+        foreach (var hit in hits)
         {
+            hit.collider.TryGetComponent(out newHoverable);
+
+            if (_currentHoverable != newHoverable)
+            {
+                _currentHoverable?.OnHoverExit();
+
+                _currentHoverable = newHoverable;
+
+                _currentHoverable?.OnHoverEnter();
+            }
+
             if (hit.collider.TryGetComponent<IInteractable>(out var interactable))
             {
                 _promptText.text = "[E]\n" + interactable.GetInteractionPrompt();
                 _currentInteractableObject = interactable;
             }
 
-            hit.collider.TryGetComponent(out newHoverable);
+            else if (hit.collider.TryGetComponent<TransparencyController>(out var transparencyController))
+            {
+                transparencyController.SetTransparent(true);
+                _transparencyObject = transparencyController;
+                isFindTransparencyController = true;
+            }
+
+            else
+            {
+                break;
+            }
         }
 
-        if (_currentHoverable != newHoverable)
+        if (_transparencyObject != null && !isFindTransparencyController)
         {
-            _currentHoverable?.OnHoverExit();
-
-            _currentHoverable = newHoverable;
-
-            _currentHoverable?.OnHoverEnter();
+            _transparencyObject.SetTransparent(false);
+            _transparencyObject = null;
         }
     }
 

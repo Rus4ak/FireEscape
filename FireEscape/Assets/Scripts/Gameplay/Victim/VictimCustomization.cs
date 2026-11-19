@@ -35,4 +35,14 @@ public class VictimCustomization : MonoBehaviour
             _activeHair.layer = 0;
         }
     }
+
+    public void SetActiveFloat(bool value)
+    {
+        _float.SetActive(value);
+    }
+
+    public void SetHappyFace()
+    {
+        _face.material = _happyFaces[Random.Range(0, _happyFaces.Length)];
+    }
 }

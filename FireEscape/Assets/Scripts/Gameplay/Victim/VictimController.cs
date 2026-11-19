@@ -26,6 +26,12 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
     {
         while (true)
         {
+            if (_hipsRigidbody.linearVelocity.sqrMagnitude < 0.01f)
+            {
+                yield return new WaitForFixedUpdate();
+                continue;
+            }
+
             RaycastHit[] hits = Physics.RaycastAll(_hipsRigidbody.transform.position, Vector3.down, _groundCheckDistance, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
 
             foreach (RaycastHit hit in hits)
@@ -35,6 +41,14 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
                     _hipsRigidbody.AddForce(hit.collider.transform.up * Mathf.Abs(_hipsRigidbody.linearVelocity.y) * _trampolineJumpForce, ForceMode.Impulse);
                     yield return new WaitForSeconds(.5f);
                     break;
+                }
+
+                if (hit.collider.TryGetComponent<WaterBuoyancy>(out var waterBuoyancy))
+                {
+                    _victimCustomization.SetActiveFloat(true);
+                    _victimCustomization.SetHappyFace();
+
+                    Destroy(this);
                 }
             }
 

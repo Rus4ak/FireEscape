@@ -72,12 +72,17 @@ public class PlayerMovement : MonoBehaviour
 
     private void RotateHand()
     {
+        Vector3 rotation = _hand.transform.rotation.eulerAngles;
+
+        rotation.x = 0;
+        rotation.z = 0;
+
         if (_rotateRightAction.IsPressed())
-            _hand.localRotation = Quaternion.Euler(Vector3.back * _rotateDegrees);
+            rotation += Vector3.back * _rotateDegrees;
         else if (_rotateLeftAction.IsPressed())
-            _hand.localRotation = Quaternion.Euler(Vector3.forward * _rotateDegrees);
-        else
-            _hand.localRotation = Quaternion.identity;
+            rotation += Vector3.forward * _rotateDegrees;
+
+        _hand.rotation = Quaternion.Euler(rotation);
     }
 
     public void OnJump(InputValue value)
