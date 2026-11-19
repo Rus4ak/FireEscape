@@ -6,9 +6,13 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
     [SerializeField] private float _jumpForce;
     [SerializeField] private float _trampolineJumpForce;
     [SerializeField] private Rigidbody _hipsRigidbody;
+    [SerializeField] private Rigidbody[] _disabledRigidbodies;
+    [SerializeField] private float _minBurningTime = 10;
+    [SerializeField] private float _maxBurningTime = 30f;
     [SerializeField] private float _groundCheckDistance;
 
     private VictimCustomization _victimCustomization;
+    private bool _isInWater;
 
     private void Awake()
     {
@@ -48,12 +52,47 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
                     _victimCustomization.SetActiveFloat(true);
                     _victimCustomization.SetHappyFace();
 
+                    _isInWater = true;
+                    StopBurning();
+
                     Destroy(this);
                 }
             }
 
             yield return new WaitForFixedUpdate();
         }
+    }
+
+    private void StartBurning()
+    {
+        float burningTime = Random.Range(_minBurningTime, _maxBurningTime);
+
+        _victimCustomization.StartBurning(burningTime);
+        StartCoroutine(Burning(burningTime));
+    }
+
+    private IEnumerator Burning(float burningTime)
+    {
+        yield return new WaitForSeconds(burningTime);
+
+        StopBurning();
+    }
+
+    private void StopBurning()
+    {
+        if (!_isInWater)
+        {
+            foreach(var rb in _disabledRigidbodies)
+            {
+                rb.freezeRotation = false;
+            }
+
+            _victimCustomization.SetSadFace();
+        }
+
+        _victimCustomization.SetActiveBurning(false);
+        
+        Destroy(this);
     }
 
     public string GetInteractionPrompt()
@@ -66,6 +105,8 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
         _hipsRigidbody.isKinematic = false;
         _hipsRigidbody.AddForce(transform.forward * _jumpForce, ForceMode.Impulse);
         Destroy(GetComponent<Collider>());
+        _victimCustomization.SetActiveBurning(true);
+        StartBurning();
     }
 
     public void OnHoverEnter()
