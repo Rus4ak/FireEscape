@@ -11,14 +11,24 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
     [SerializeField] private float _maxBurningTime = 30f;
     [SerializeField] private float _groundCheckDistance;
 
+    [Header("Sounds")]
+    [SerializeField] private AudioClip _screamSounds;
+    [SerializeField] private AudioClip _deathSound;
+    [SerializeField] private AudioClip _happySound;
+    [SerializeField] private AudioClip _trampolineSound;
+
     private VictimCustomization _victimCustomization;
+    private AudioSource _audioSource;
     private bool _isInWater;
 
     private void Awake()
     {
         _victimCustomization = GetComponent<VictimCustomization>();
+        _audioSource = GetComponent<AudioSource>();
 
         StartCoroutine(TrampolineCheck());
+
+        _audioSource.PlayOneShot(_screamSounds);
     }
 
     private void OnDisable()
@@ -43,6 +53,7 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
                 if (hit.collider.CompareTag("Trampoline"))
                 {
                     _hipsRigidbody.AddForce(hit.collider.transform.up * Mathf.Abs(_hipsRigidbody.linearVelocity.y) * _trampolineJumpForce, ForceMode.Impulse);
+                    _audioSource.PlayOneShot(_trampolineSound);
                     yield return new WaitForSeconds(.5f);
                     break;
                 }
@@ -56,6 +67,11 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
                     StopBurning();
 
                     Destroy(this);
+                }
+
+                if (hit.collider.CompareTag("Ground") && _hipsRigidbody.linearVelocity.y < -10)
+                {
+                    StopBurning();
                 }
             }
 
@@ -88,6 +104,11 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
             }
 
             _victimCustomization.SetSadFace();
+            _audioSource.PlayOneShot(_deathSound);
+        }
+        else
+        {
+            _audioSource.PlayOneShot(_happySound);
         }
 
         _victimCustomization.SetActiveBurning(false);
@@ -107,6 +128,7 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
         Destroy(GetComponent<Collider>());
         _victimCustomization.SetActiveBurning(true);
         StartBurning();
+        _audioSource.PlayOneShot(_screamSounds);
     }
 
     public void OnHoverEnter()

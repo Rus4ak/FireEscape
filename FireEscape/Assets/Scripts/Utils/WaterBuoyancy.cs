@@ -12,7 +12,11 @@ public class WaterBuoyancy : MonoBehaviour
     [SerializeField] private float _waveHeight = .1f;
     [SerializeField] private float _waveSpeed = 1f;
 
+    [Header("")]
+    [SerializeField] private AudioSource _splashSound;
+
     private readonly Dictionary<Rigidbody, float> _defaultDrags = new();
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -22,6 +26,10 @@ public class WaterBuoyancy : MonoBehaviour
             return;
 
         _defaultDrags.Add(rb, rb.linearDamping);
+
+        _splashSound.transform.position = other.transform.position;
+        _splashSound.volume = Mathf.Clamp01(Mathf.Abs(rb.linearVelocity.y) / 15);
+        _splashSound.Play();
     }
 
     private void OnTriggerExit(Collider other)

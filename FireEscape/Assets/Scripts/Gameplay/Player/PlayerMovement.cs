@@ -1,3 +1,4 @@
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -18,17 +19,20 @@ public class PlayerMovement : MonoBehaviour
 
     private PlayerInput _playerInput;
     private Rigidbody _rigidbody;
+    private PlayerSounds _sounds;
     private Vector3 _movement;
     private InputAction _moveAction;
     private InputAction _sprintAction;
     private InputAction _rotateRightAction;
     private InputAction _rotateLeftAction;
     private bool _isOnGround;
+    private bool _isSwimming;
 
     private void Awake()
     {
         _playerInput = GetComponent<PlayerInput>();
         _rigidbody = GetComponent<Rigidbody>();
+        _sounds = GetComponent<PlayerSounds>();
 
         _moveAction = _playerInput.actions.FindAction("Move");
         _sprintAction = _playerInput.actions.FindAction("Sprint");
@@ -40,20 +44,35 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector2 input = _moveAction.ReadValue<Vector2>();
 
-        _movement = (transform.forward * input.y + 
+        _movement = (transform.forward * input.y +
             transform.right * input.x).normalized;
 
+        bool isSprint = false;
+
         if (_sprintAction.IsPressed())
+        {
             _movement *= _sprintSpeed;
+            isSprint = true;
+        }
         else
             _movement *= _speed;
+
+        if (_movement.sqrMagnitude < 0.1f || (!_isOnGround && !_isSwimming))
+            _sounds.StopMovingSound();
+        else
+        {
+            if (_isSwimming)
+                _sounds.PlayMovingSound(MovingSoundType.Swimming, isSprint);
+            else
+                _sounds.PlayMovingSound(MovingSoundType.Walking, isSprint);
+        }
 
         RotateHand();
     }
 
     private void FixedUpdate()
     {
-        Collider[] hits = Physics.OverlapSphere(_groundCheckPoint.position, _groundCheckRadius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        Collider[] hits = Physics.OverlapSphere(_groundCheckPoint.position, _groundCheckRadius, Physics.DefaultRaycastLayers);
 
         _isOnGround = false;
 
@@ -61,13 +80,23 @@ public class PlayerMovement : MonoBehaviour
         {
             if (hit.gameObject != gameObject)
             {
-                _isOnGround = true;
+                if (!hit.isTrigger)
+                    _isOnGround = true;
+
+                if (hit.CompareTag("Water"))
+                    _isSwimming = true;
+                else
+                    _isSwimming = false;
+
                 break;
             }
         }
 
         _rigidbody.linearVelocity = new Vector3(_movement.x,
             _rigidbody.linearVelocity.y, _movement.z);
+
+        if (_isOnGround && _rigidbody.linearVelocity.y < -1)
+            _sounds.PlayEndJumpingSound();
     }
 
     private void RotateHand()
@@ -90,6 +119,7 @@ public class PlayerMovement : MonoBehaviour
         if (value.isPressed && _isOnGround)
         {
             _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
+            _sounds.PlayStartJumpingSound();
         }
     }
 
