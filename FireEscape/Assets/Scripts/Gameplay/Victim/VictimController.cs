@@ -65,8 +65,6 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
 
                     _isInWater = true;
                     StopBurning();
-
-                    Destroy(this);
                 }
 
                 if (hit.collider.CompareTag("Ground") && _hipsRigidbody.linearVelocity.y < -10)
@@ -105,10 +103,12 @@ public class VictimController : MonoBehaviour, IInteractable, IHoverable
 
             _victimCustomization.SetSadFace();
             _audioSource.PlayOneShot(_deathSound);
+            ScoreCounter.Instance.AddLostPeople();
         }
         else
         {
             _audioSource.PlayOneShot(_happySound);
+            ScoreCounter.Instance.AddRescuedPeople();
         }
 
         _victimCustomization.SetActiveBurning(false);

@@ -23,8 +23,6 @@ public class Spawner : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(_spawnRate);
-
             Transform spawnPoint = _spawnPoints[Random.Range(0, _spawnPoints.Length)];
 
             bool isOccupied = Physics.CheckSphere(
@@ -36,6 +34,8 @@ public class Spawner : MonoBehaviour
             if (isOccupied) continue;
 
             Instantiate(_prefab, spawnPoint.position, spawnPoint.rotation);
+
+            yield return new WaitForSeconds(_spawnRate);
         }
     }
 
